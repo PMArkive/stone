@@ -1,0 +1,195 @@
+.dem {
+  color: #0000ff;
+}
+.maybe_dem {
+  color: #0066ff;
+}
+.leans_dem {
+  color: #3399ff;
+}
+.gop {
+  color: #cc0000;
+}
+.maybe_gop {
+  color: #ff3300;
+}
+.leans_gop {
+  color: #ff6666;
+}
+.tie {
+  color: #4d4d4d;
+}
+body {
+  font-size: 12px;
+  font-family: Verdana, Helvetica, Arial, sans-serif;
+}
+table, th, td, tr {
+  border: 1px solid black;
+  border-collapse: collapse;
+  padding: 5px;
+}
+.poll_block {
+  background-color: #ffffcc;
+  font-size: 8pt;
+  table-layout: fixed;
+}
+.poll_text_cell {
+  text-overflow: ellipsis;
+  max-width: 160px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.margin_row_normal {
+}
+.margin_row_tipping {
+  background-color: #FFFACD;
+}
+.column {
+  float: left;
+  width: 50%;
+  text-align: left;
+}
+#topline {
+  text-align: justify;
+  text-justify: distribute-all-lines;
+}
+.topline_box {
+  /*border-width: 1px;
+  border-style: solid;*/
+  display: inline-block;
+  vertical-align: top;
+  *display: inline;
+  height: 70px;
+  margin: 10px;
+  margin-left: 0px;
+  background-color: #FFFACD;
+  padding: 3px;
+}
+#topline::after {
+  content: "";
+  display: table;
+  clear: both;
+}
+#data {
+  width: 1200px;
+}
+#data::after {
+  content: "";
+  display: table;
+  clear: both;
+}
+.map_image {
+  width: 500px;
+}
+.graph_image {
+  width: 450px;
+}
+.xlink {
+  display: inline-block;
+}
+.xlink:hover {
+  cursor: pointer;
+}
+.rotate {
+  transform: rotate(90deg);
+}
+.narrow_text_blurb {
+  white-space: pre-wrap;
+  max-width: 500px;
+  word-wrap: break-word;
+  margin-bottom: -15px;
+}
+.text_blurb {
+  white-space: pre-wrap;
+  max-width: 800px;
+  display: table;
+  word-wrap: break-word;
+}
+.text_blurb ol, ul {
+  white-space: normal;
+}
+.invisible {
+  display: none;
+}
+.old_poll_row td {
+  font-style: italic;
+  color: grey;
+}
+
+@mixin range-track {
+  -webkit-appearance: none;
+  box-sizing: border-box;
+  width: 100%;
+  height: 40px;
+  color: transparent;
+  background: lightgray;
+  border: none;
+}
+
+@mixin range-thumb {
+  -webkit-appearance: none;
+  height: 40px;
+  width: 40px;
+  border-radius: 999px;
+  background: black;
+  box-shadow: 0px 2px 10px -2px black(1);
+}
+
+input[type=range] {
+  box-sizing: border-box;
+  -webkit-appearance: none;
+  display: block;
+  margin: 0;
+  width: 100%;
+  background: lightgray;
+  border-radius: 12px;
+  outline: none;
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+  @include range-track();
+}
+input[type=range]::-moz-range-track {
+  @include range-track();
+}
+input[type=range]::-ms-track {
+  @include range-track();
+}
+input[type=range]::-ms-fill-lower {
+  display: none;
+}
+input[type=range]::-ms-fill-upper {
+  display: none;
+}
+input[type=range]::-webkit-slider-thumb {
+  @include range-thumb();
+}
+input[type=range]::-moz-range-thumb {
+  @include range-thumb();
+}
+input[type=range]::-ms-thumb {
+  @include range-thumb();
+}
+
+.slider_div {
+  box-sizing: border-box;
+  width: 500px;
+}
+
+.tickbox {
+  box-sizing: border-box;
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 20px;
+}
+
+.tick {
+  box-sizing: border-box;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  width: 1px;
+  height: 10px;
+  line-height: 10px;
+  margin-bottom: 20px;
+}

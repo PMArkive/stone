@@ -1,0 +1,75 @@
+# vim: ft=python sts=2 ts=8 sw=2 tw=99 et
+import os
+
+class Stone(object):
+  def __init__(self):
+    pass
+
+  def configure(self):
+    builder.cxx = builder.DetectCxx()
+    builder.cxx.cflags += [
+      '-Wall',
+      '-Werror',
+      '-g3',
+      '-O3',
+    ]
+    builder.cxx.cxxflags += [
+      '-std=c++17',
+      '-Wno-deprecated-declarations',
+    ]
+
+    if builder.cxx.family == 'gcc':
+      builder.cxx.cflags += [
+        '-Wno-unknown-pragmas',
+        '-Wno-ignored-attributes',
+      ]
+    elif builder.cxx.family == 'clang':
+      pass
+    
+    #'-Wno-unused-private-field',
+
+  def build(self):
+    self.libprotos = None
+    self.binaries = []
+    self.protos = builder.Build('proto/AMBuild', {
+      'Global': self,
+    })
+
+    def amtl_configure(builder, name):
+      return builder.cxx.StaticLibrary(name)
+
+    self.libamtl = builder.Build('third_party/amtl/amtl/AMBuilder', {
+      'Configure': amtl_configure,
+    })
+
+    scripts = [
+      'driver/AMBuild',
+      'tools/AMBuild',
+    ]
+    builder.Build(scripts, {
+      'Global': self,
+    })
+
+  def dist(self):
+    builder.AddFolder('dist')
+    builder.AddFolder('dist/data')
+    for binary in self.binaries:
+      builder.AddCopy(binary, 'dist/')
+
+    scripts = [
+      'campaigns/AMBuild',
+    ]
+    builder.Build(scripts, {
+      'Global': self,
+    })
+
+  def add_binary(self, node):
+    if hasattr(node, 'binary'):
+      self.binaries.append(node.binary)
+    else:
+      self.binaries.append(node)
+
+me = Stone()
+me.configure()
+me.build()
+me.dist()

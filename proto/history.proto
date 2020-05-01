@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package stone;
+
+import "proto/model.proto";
+import "proto/state.proto";
+import "proto/poll.proto";
+
+message ImportantDate {
+  Date date = 1;
+  string label = 2;
+}
+
+message CampaignData {
+  Date election_day = 1;
+  repeated ModelData history = 2;
+  FeedInfo feed_info = 3;
+  repeated State states = 4;
+  SenateMap senate = 5;
+  map<string, string> state_codes = 6;
+  bool presidential_year = 7;
+  GovernorMap governor_map = 8;
+  HouseMap house_map = 9;
+  string dem_pres = 10;
+  string gop_pres = 11;
+  int64 last_updated = 12;
+  repeated ImportantDate important_dates = 13;
+
+  // After election day, we populate final race results into the feed to find
+  // final meta-margins. Some things, like the electoral college results, cannot
+  // be expressed as polls, so these are tracked in a separate struct.
+  FinalResults results = 14;
+}
+
+message FinalResults {
+  MapEv evs = 1;
+}
+
+// This is stored in plain-text format along with the hardcoded campaign info.
+message DatedHouseRatings {
+  Date date = 1;
+  repeated HouseRating old_ratings = 2;
+  map<int32, HouseRating> ratings = 3;
+}
+
+message HouseRatingHistory {
+  repeated DatedHouseRatings entries = 1;
+}

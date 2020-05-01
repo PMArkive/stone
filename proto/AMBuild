@@ -1,0 +1,70 @@
+# vim: ft=python sts=2 ts=2 sw=0 tw=99 et
+import os
+
+proto_files = [
+  ('history.proto', ('cpp', 'python')),
+  ('model.proto', ('cpp', 'python')),
+  ('poll.proto', ('cpp', 'python')),
+  ('state.proto', ('cpp', 'python')),
+  ('cache.proto', ('cpp', 'python')),
+]
+
+kSuffixMap = {
+  'cpp': ('.pb.h', '.pb.cc'),
+  'python': ('_pb2.py',),
+}
+
+ProtoDict = {
+  '.cc': [],
+  '.h': [],
+  '.py': [],
+}
+
+# This is really proto/proto. The -Iproto forces a subdir.
+builder.AddFolder('proto')
+
+# Hack: everything is interconnected until we can parse Make-style dependencies
+# in AMBuild.
+inputs = [f for f, _ in proto_files]
+for proto, cc_list in proto_files:
+
+  assert proto.endswith('.proto')
+  prefix = proto[:-len('.proto')]
+
+  for cc in cc_list:
+    outputs = []
+    for suffix in kSuffixMap[cc]:
+      outputs.append(os.path.join('proto', prefix + suffix))
+
+    out_dir = os.path.join(builder.buildPath, builder.buildFolder)
+    argv = [
+      'protoc',
+      '-I', builder.sourcePath,
+      '--{}_out={}'.format(cc, out_dir),
+      os.path.join(builder.currentSourcePath, proto),
+    ]
+
+    outputs = builder.AddCommand(inputs, argv, outputs)
+    for out in outputs:
+      if out.path.endswith('.cc'):
+        ProtoDict['.cc'].append(out)
+      elif out.path.endswith('.h'):
+        ProtoDict['.h'].append(out)
+      elif out.path.endswith('.py'):
+        ProtoDict['.py'].append(out)
+
+proto_path = os.path.join(builder.buildPath, 'proto')
+proto_deps = [src_entry for src_entry in ProtoDict['.h']]
+
+# :TODO: allow Deps in source lists
+protos = builder.cxx.StaticLibrary('protos')
+protos.compiler.cxxincludes.append(proto_path)
+protos.compiler.sourcedeps += proto_deps
+for src_entry in ProtoDict['.cc']:
+  src_path = os.path.join(builder.buildPath, src_entry.path)
+  protos.sources.append(src_path)
+  protos.compiler.sourcedeps.append(src_entry)
+
+Global.libprotos = builder.Add(protos)
+
+rvalue = ProtoDict

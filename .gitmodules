@@ -1,0 +1,27 @@
+[submodule "third_party/amtl"]
+	path = third_party/amtl
+	url = https://github.com/alliedmodders/amtl
+[submodule "third_party/date"]
+	path = third_party/date
+	url = https://github.com/HowardHinnant/date
+[submodule "third_party/csv-parser"]
+	path = third_party/csv-parser
+	url = https://github.com/vincentlaucsb/csv-parser
+[submodule "third_party/nlohmann-json"]
+	path = third_party/nlohmann-json
+	url = https://github.com/nlohmann/json
+[submodule "third_party/inja"]
+	path = third_party/inja
+	url = https://github.com/pantor/inja
+[submodule "third_party/pbar"]
+	path = third_party/pbar
+	url = https://github.com/Jvanrhijn/pbar
+[submodule "third_party/indicators"]
+	path = third_party/indicators
+	url = https://github.com/p-ranav/indicators
+[submodule "third_party/erfinv"]
+	path = third_party/erfinv
+	url = https://github.com/dvander/erfinv
+[submodule "third_party/PicoSHA2"]
+	path = third_party/PicoSHA2
+	url = https://github.com/okdshin/PicoSHA2

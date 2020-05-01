@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package stone;
+
+message Date {
+  int32 year = 1;
+  int32 month = 2;
+  int32 day = 3;
+}
+
+message Poll {
+  string description = 1;
+  Date start = 2;
+  Date end = 3;
+
+  double dem = 4;
+  double gop = 5;
+  double margin = 6;
+
+  message OtherParty {
+    string name = 1;
+    double result = 2;
+  }
+  repeated OtherParty other = 7;
+  string url = 8;
+  int32 sample_size = 9;
+  string sample_type = 10;
+  Date published = 11;
+  string id = 12;
+  double weight = 13;
+  bool tracking = 14;
+  int32 grade = 15;
+  bool partisan = 16;
+}
+
+message PollList {
+  repeated Poll polls = 2;
+}
+
+message FeedInfo {
+  string description = 1;
+  string short_name = 2;
+  string feed_type = 3;
+};
+
+message HouseRating {
+  string presumed_winner = 1;
+  string rating = 2;
+  int32 race_id = 3;	// Set after scraping.
+  string district = 4; 	// Only set during scraping.
+}
+
+message HouseRatingList {
+  repeated HouseRating ratings = 1;
+}
+
+message Feed {
+  FeedInfo info = 1;
+  repeated Poll national_polls = 2;
+  map<string, PollList> states = 3;
+  map<int32, PollList> senate_polls = 4;
+  map<int32, PollList> governor_polls = 5;
+  map<int32, HouseRating> house_ratings = 6;
+  map<int32, PollList> house_polls = 7;
+  repeated Poll generic_ballot_polls = 8;
+}

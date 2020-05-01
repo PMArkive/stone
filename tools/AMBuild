@@ -1,0 +1,51 @@
+# vim: ft=python sts=2 ts=2 sw=0 tw=99 et
+import os
+
+def add_py_binary(name):
+  inputs = [
+      os.path.join(builder.sourcePath, 'tools', name),
+  ]
+  inputs.extend(Global.protos['.py'])
+
+  argv = [
+      'pyinstaller',
+      inputs[0],
+      '-F',
+      '-p', os.path.join(builder.buildPath, 'proto'),
+      '-p', os.path.join(builder.buildPath, 'proto', 'proto'),
+  ]
+
+  outputs = [
+      os.path.join('dist', os.path.basename(inputs[0]).replace('.py', '')),
+  ]
+
+  builder.AddFolder('dist')
+  nodes = builder.AddCommand(inputs, argv, outputs)
+  for node in nodes:
+    Global.add_binary(node)
+
+add_py_binary('dump-rcp-2012.py')
+add_py_binary('scrape-wikipedia-house.py')
+add_py_binary('generate-graph.py')
+
+def add_tool(name, sources):
+  tool = builder.cxx.Program(name)
+  tool.compiler.cxxincludes += [
+    os.path.join(builder.buildPath, 'proto'),
+    os.path.join(builder.sourcePath, 'third_party/amtl'),
+    os.path.join(builder.sourcePath, 'third_party/date/include'),
+  ]
+  tool.compiler.pkg_config('protobuf')
+  tool.compiler.sourcedeps += [src_entry for src_entry in Global.protos['.h']]
+  tool.compiler.linkflags += [
+    Global.libprotos.binary,
+    Global.libamtl.binary,
+    '-lpthread', # Needed to work around pkg-config bugs in libprotobuf
+  ]
+
+  tool.sources = sources
+  Global.add_binary(builder.Add(tool))
+
+add_tool('dumptool', ['dump-tool.cpp'])
+add_tool('stddev-tool', ['stddev-tool.cpp'])
+add_tool('export-house-ratings', ['export-house-ratings.cpp'])

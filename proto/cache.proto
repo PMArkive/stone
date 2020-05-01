@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+package stone;
+
+message DataCache {
+  map<string, string> strings = 1;
+};

@@ -1,0 +1,52 @@
+# vim: ft=python sts=2 ts=2 sw=0 tw=99 et
+import os
+
+proto_path = os.path.join(builder.buildPath, 'proto')
+
+driver = builder.cxx.Program('driver')
+driver.compiler.cxxflags += []
+driver.compiler.cxxincludes += [
+  proto_path,
+  os.path.join(builder.sourcePath, 'third_party'),
+  os.path.join(builder.sourcePath, 'third_party/amtl'),
+  os.path.join(builder.sourcePath, 'third_party/csv-parser/single_include'),
+  os.path.join(builder.sourcePath, 'third_party/date/include'),
+  os.path.join(builder.sourcePath, 'third_party/indicators/single_include'),
+  os.path.join(builder.sourcePath, 'third_party/erfinv'),
+  os.path.join(builder.sourcePath, 'third_party/inja/single_include'),
+  os.path.join(builder.sourcePath, 'third_party/nlohmann-json/single_include'),
+]
+driver.compiler.linkflags += [
+  Global.libprotos.binary,
+  Global.libamtl.binary,
+  '-lm',
+  '-lpthread',
+]
+driver.compiler.cflags += [
+  '-Wno-unused-variable',
+  '-Wno-unknown-pragmas',
+]
+driver.compiler.pkg_config('libcurl')
+driver.compiler.pkg_config('ncurses')
+driver.compiler.pkg_config('openssl')
+driver.compiler.pkg_config('protobuf')
+driver.compiler.sourcedeps += [src_entry for src_entry in Global.protos['.h']]
+driver.sources += [
+  'analysis.cpp',
+  'campaign.cpp',
+  'context.cpp',
+  'datasource-538.cpp',
+  'datasource-rcp.cpp',
+  'datasource-wikipedia.cpp',
+  'htmlgen.cpp',
+  'ini-reader.cpp',
+  'logging.cpp',
+  'main.cpp',
+  'mathlib.cpp',
+  'metamargin.cpp',
+  'predict.cpp',
+  'utility.cpp',
+  os.path.join(builder.sourcePath, 'third_party/erfinv/erfinv.cpp'),
+]
+node = builder.Add(driver)
+Global.add_binary(node)

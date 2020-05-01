@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+package stone;
+
+message State {
+  string name = 1;
+  int32 evs = 2;
+  string parent = 3; // If district, parent state name
+  string code = 4;
+  int32 race_id = 5;
+}
+
+message Candidate {
+  string name = 1;
+  string caucus = 2;
+  string party = 3;
+};
+
+message Race {
+  enum RaceType {
+    UNKNOWN = 0;
+    ELECTORAL_COLLEGE = 1;
+    SENATE = 2;
+    GOVERNOR = 3;
+    HOUSE = 4;
+    NATIONAL = 5;
+    GENERIC_BALLOT = 6;
+  };
+  RaceType type = 1;
+  string region = 2;
+  Candidate dem = 3;
+  Candidate gop = 4;
+  string presumed_winner = 5;
+  string current_holder = 6;
+  string rating = 7;
+  int32 race_id = 8;
+  string subregion = 9;
+};
+
+message MapEv {
+  int32 dem = 1;
+  int32 gop = 2;
+}
+
+message SenateMap {
+  repeated Race races = 1;
+  MapEv seats = 2;
+  MapEv seats_up = 3;
+  int32 dem_seats_for_control = 4;
+  int32 total_seats = 5;
+};
+
+message GovernorMap {
+  repeated Race races = 1;
+  MapEv seats = 2;
+  MapEv seats_up = 3;
+};
+
+message HouseMap {
+  // Vacant seats should be counted as the last party to win them, since that
+  // data is used to determine how the house makeup changes during scraping.
+  // We have to do this because not all races receive ratings and manually
+  // entering 435 seats would be too difficult. So instead, we scrape what we
+  // can, and manually attribute vacant seats in the .ini file.
+  MapEv seats = 1;
+  int32 total_seats = 2;
+  repeated Race races = 3;
+}

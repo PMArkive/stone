@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package stone;
+
+import "proto/poll.proto";
+import "proto/state.proto";
+
+message RaceModel {
+  // The race id index is based on the race type.
+  int32 race_id = 1;
+  Race.RaceType race_type = 2;
+  repeated Poll polls = 3;
+  double margin = 4;
+  double win_prob = 5;
+  double mean = 6;
+  double median = 7;
+  double stddev = 8;
+  string rating = 9;
+  double undecideds = 10;
+};
+
+message EvRange {
+  int32 low = 1;
+  int32 high = 2;
+}
+
+message MmRange {
+  double low = 1;
+  double high = 2;
+};
+
+message Prediction {
+  double metamargin = 1;
+  double dem_win_p = 2;
+  int32 average = 3;
+  MmRange mm_1sig = 4;
+  MmRange mm_2sig = 5;
+  EvRange score_1sig = 6;
+  EvRange score_2sig = 7;
+};
+
+message ModelData {
+  Date date = 1;
+  int64 generated = 2;
+
+  // National polls are only present in presidential years.
+  RaceModel national = 3;
+  RaceModel generic_ballot = 4;
+  double undecideds = 5;
+
+  repeated RaceModel states = 10;
+  double metamargin = 11;
+  MapEv mean_ev = 12;
+  EvRange dem_ev_range = 13;
+  Prediction ec_prediction = 14;
+  int32 dem_ev_mode = 15;
+  int32 predicted_dem_ev_mode = 16;
+
+  repeated RaceModel senate_races = 20;
+  double senate_mm = 21;
+  MapEv senate_median = 22;
+  bool senate_can_flip = 23;
+  EvRange dem_senate_range = 24;
+  MapEv senate_safe_seats = 25;
+  Prediction senate_prediction = 26;
+  // If dems need an odd number of seats to control, then it's a presidential
+  // year, or a midyear with an R president. In this case seats_needed = 51
+  // and alt_seats == 50. If dems need an even number of seats to control, it's
+  // a midyear with a D president. In this case alt seats == 51 (or whatever,
+  // the senate may change if a new state gets admitted).
+  int32 senate_control_alt_seats = 27;
+  double senate_win_prob_alt = 28;
+
+  repeated RaceModel gov_races = 30;
+  MapEv gov_median = 31;
+
+  repeated RaceModel house_races = 40;
+  MapEv house_median = 41;
+  EvRange dem_house_range = 42;
+  double house_mm = 43;
+  bool house_can_flip = 44;
+  MapEv house_safe_seats = 45;
+  Prediction house_prediction = 46;
+}

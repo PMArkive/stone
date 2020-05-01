@@ -1,0 +1,32 @@
+# vim: ft=python sts=2 ts=8 sw=2 tw=99 et
+import os
+
+builder.SetBuildFolder('.')
+
+kCampaigns = {
+  '2004': [ 'results' ],
+  '2006': [ 'senate', 'house', 'results' ],
+  '2008': [ 'senate', 'house', 'results' ],
+  '2010': [ 'senate', 'house', 'results' ],
+  '2012': [ 'senate', 'house', 'results' ],
+  '2014': [ 'senate', 'house', 'results' ],
+  '2016': [ 'senate', 'governors', 'house', 'results' ],
+  '2018': [ 'senate', 'governors', 'house', 'results' ],
+  '2020': [ 'senate', 'governors', 'house', 'saved-house-ratings.proto.text' ],
+}
+
+dist_out = builder.AddFolder('dist/data')
+builder.AddCopy('state-map-2010.ini', dist_out)
+builder.AddCopy('state-map-2000.ini', dist_out)
+
+for year in kCampaigns:
+  year_dist_out = builder.AddFolder('dist/data/{}'.format(year))
+
+  builder.AddCopy('{}/election-{}.ini'.format(year, year), year_dist_out)
+
+  for file in kCampaigns[year]:
+    if '.' not in file:
+      in_file = '{}/{}-{}.ini'.format(year, file, year)
+    else:
+      in_file = '{}/{}'.format(year, file)
+    builder.AddCopy(in_file, year_dist_out)

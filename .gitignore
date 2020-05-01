@@ -1,0 +1,6 @@
+campaign-*
+obj-linux-x86_64
+run
+__pycache__
+configs
+.gdb_history
