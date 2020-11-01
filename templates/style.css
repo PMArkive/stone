@@ -65,6 +65,10 @@ table, th, td, tr {
   background-color: #FFFACD;
   padding: 3px;
 }
+.yellow_box {
+  background-color: #FFFACD;
+  padding: 3px;
+}
 #topline::after {
   content: "";
   display: table;

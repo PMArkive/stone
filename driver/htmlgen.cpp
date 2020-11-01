@@ -897,6 +897,9 @@ HtmlGenerator::RenderMain(const std::string& path)
     }
     obj["has_house_polls"] = has_house_polls;
 
+    if (IsLatestPrediction())
+        renderer_->RenderTo("toplines.html.tpl", obj, "toplines.html");
+
     renderer_->RenderTo("index.html.tpl", obj, path);
     return true;
 }
@@ -1715,6 +1718,16 @@ HtmlGenerator::RenderSeatChange(const std::string& prefix, int change)
         main_[class_key] = "tie";
         main_[text_key] = "No net change";
     }
+}
+
+bool
+HtmlGenerator::IsLatestPrediction()
+{
+    if (!is_prediction_)
+        return false;
+    if (campaign_.history()[0].date() > campaign_.election_day())
+        return data_.date() == campaign_.history()[1].date();
+    return data_.date() == campaign_.history()[0].date();
 }
 
 } // namespace stone

@@ -104,6 +104,7 @@ class HtmlGenerator
     void RenderSeatChange(const std::string& prefix, int change);
     void RenderDelta(nlohmann::json& obj, double prev_margin, double new_margin);
     std::string RenderWinner(double win_p);
+    bool IsLatestPrediction();
 
   private:
     Renderer* renderer_;
