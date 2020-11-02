@@ -17,6 +17,8 @@ message RaceModel {
   double stddev = 8;
   string rating = 9;
   double undecideds = 10;
+  double dem_average = 11;
+  double gop_average = 12;
 };
 
 message EvRange {

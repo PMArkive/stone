@@ -39,6 +39,7 @@ class Renderer
     typedef std::pair<std::string, std::string> GraphCommand;
     void AddGraphCommands(nlohmann::json& obj, const std::vector<GraphCommand>& commands,
                           const Date& date);
+    void AddGraphCommands(std::vector<std::string>&& commands);
 
     int total_evs() const { return total_evs_; }
     bool backdating() const { return backdating_; }
@@ -76,6 +77,7 @@ class HtmlGenerator
 
     bool RenderMain(const std::string& path);
     void RenderWrongometer();
+    void RenderVoteShareGraphs();
 
   private:
     typedef ::google::protobuf::RepeatedPtrField<Poll> RepeatedPoll;

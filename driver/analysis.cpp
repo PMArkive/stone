@@ -868,11 +868,17 @@ Analysis::ComputePollModelStats(RaceModel* model)
 {
     assert(!model->polls().empty());
 
+    model->set_dem_average(0.0);
+    model->set_gop_average(0.0);
+
     double weighted_average = 0.0;
     std::vector<double> margins;
-    for (const auto &poll : model->polls()) {
+    for (const auto& poll : model->polls()) {
         weighted_average += poll.margin() * poll.weight();
         margins.emplace_back(poll.margin());
+
+        model->set_dem_average(model->dem_average() + poll.weight() * poll.dem());
+        model->set_gop_average(model->gop_average() + poll.weight() * poll.gop());
     }
 
     // Round to three significant digits. This works around something like:

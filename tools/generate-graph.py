@@ -13,7 +13,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('history_file', type=str, help='History file')
     parser.add_argument('graph_type', type=str, help='Graph type or batch mode',
-                        choices=['bias', 'score', 'batch'])
+                        choices=['bias', 'score', 'vote_share', 'batch'])
     args = parser.parse_args(sys.argv[1:3])
 
     cd = history_pb2.CampaignData()
@@ -58,6 +58,8 @@ def main():
             grapher = ScoreGrapher(cd, end_date, race_type)
         elif graph_type == 'bias':
             grapher = BiasGrapher(cd, end_date, race_type)
+        elif graph_type == 'vote_share':
+            grapher = VoteShareGrapher(cd, end_date, race_type)
         else:
             raise Exception('Unknown graph type: {}'.format(graph_type))
 
@@ -103,8 +105,11 @@ class Grapher(object):
         fig.autofmt_xdate()
 
         ax.legend()
-        if self.race_type_ in ['president', 'national', 'generic_ballot', 'senate']:
+        if self.should_add_important_dates():
             self.add_important_dates(ax)
+
+    def should_add_important_dates(self):
+        return self.race_type_ in ['president', 'national', 'generic_ballot', 'senate']
 
     def add_important_dates(self, ax):
         y_min, y_max = ax.get_ybound()
@@ -112,6 +117,8 @@ class Grapher(object):
         prev_date = None
         for important_date in self.cd_.important_dates:
             date = get_proto_date(important_date.date)
+            if date > self.end_date_:
+                continue
             ax.axvline(date,
                        color = 'maroon',
                        linestyle = 'dashed',
@@ -308,6 +315,86 @@ class ScoreGrapher(Grapher):
         'senate': 'Seats',
         'house': 'Seats',
     }
+
+class VoteShareGrapher(Grapher):
+    def __init__(self, args, cd, end_date):
+        super(VoteShareGrapher, self).__init__(args, cd, end_date)
+
+        parts = self.race_type_.split(':')
+        self.race_type_ = parts[0]
+        if self.race_type_ == 'national':
+            self.fetch_model_ = lambda data: data.national
+            self.candidates_ = [self.cd_.dem_pres, self.cd_.gop_pres]
+            self.race_title_ = 'National Popular Vote'
+        elif self.race_type_ == 'generic_ballot':
+            self.fetch_model_ = lambda data: data.generic_ballot
+            self.candidates_ = ["Dem", "GOP"]
+            self.race_title_ = 'Generic Ballot'
+        elif self.race_type_ in ['president', 'senate']:
+            self.race_id_ = int(parts[1])
+
+            if self.race_type_ == 'president':
+                self.candidates_ = [self.cd_.dem_pres, self.cd_.gop_pres]
+                self.race_title_ = \
+                    '{} Presidential'.format(self.cd_.states[self.race_id_].name)
+            else:
+                race = self.cd_.senate.races[self.race_id_]
+                self.candidates_ = [race.dem.name, race.gop.name]
+                self.race_title_ = \
+                    '{} Senate'.format(self.cd_.senate.races[self.race_id_].region)
+
+            def fetch_model(data):
+                if self.race_type_ == 'president':
+                    array = data.states
+                elif self.race_type_ == 'senate':
+                    array = data.senate_races
+                for model in array:
+                    if model.race_id == self.race_id_:
+                        return model
+                return None
+
+            self.fetch_model_ = fetch_model
+
+    def plot(self):
+        fig, ax = plt.subplots()
+
+        x_data = []
+        dem_data, gop_data = [], []
+        for dp in self.datapoints_:
+            model = self.fetch_model_(dp)
+            if not len(model.polls):
+                continue
+            x_data.append(get_proto_date(dp.date))
+            dem_data.append(model.dem_average)
+            gop_data.append(model.gop_average)
+
+        y_min = 0
+        y_max = dem_data[-1] + gop_data[-1]
+        ax.set_ybound(y_min, y_max)
+
+        dem_label, gop_label = self.candidates_
+
+        ax.plot(x_data, dem_data, color = 'blue', zorder = 3, label = dem_label)
+        ax.plot(x_data, gop_data, color = 'red', zorder = 3, label = gop_label)
+
+        if self.end_date_ >= self.election_day_ and self.cd_.HasField('results'):
+            results = self.fetch_model_(self.cd_.history[0])
+            dem_avg = results.dem_average
+            gop_avg = results.gop_average
+            ax.plot([self.election_day_], [dem_avg], marker = '*', markersize = 10, color = 'blue',
+                    clip_on = False, zorder = 4)
+            ax.plot([self.election_day_], [gop_avg], marker = '*', markersize = 10, color = 'red',
+                    clip_on = False, zorder = 4)
+
+        ax.set_title("{} {} Race History".format(self.cd_.election_day.year, self.race_title_))
+        ax.set_ylabel('Vote Share')
+
+        # Must be after setting bounds/limits.
+        self.config(fig, ax)
+        return fig
+
+    def should_add_important_dates(self):
+        return self.race_type_ in ['president', 'national']
 
 if __name__ == '__main__':
     main()

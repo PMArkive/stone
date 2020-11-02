@@ -375,22 +375,22 @@ Campaign::InitSenate(const IniFile& file, std::string_view file_name)
 
     auto iter = section.find("dem_seats");
     if (iter == section.end()) {
-        Err() << "House dem_seats not found in " << file_name;
+        Err() << "Senate dem_seats not found in " << file_name;
         return false;
     }
     if (!ParseInt(iter->second, &v)) {
-        Err() << "House dem_seats value invalid in " << file_name;
+        Err() << "Senate dem_seats value invalid in " << file_name;
         return false;
     }
     senate_map_.mutable_seats()->set_dem(v);
 
     iter = section.find("gop_seats");
     if (iter == section.end()) {
-        Err() << "House gop_seats not found in " << file_name;
+        Err() << "Senate gop_seats not found in " << file_name;
         return false;
     }
     if (!ParseInt(iter->second, &v)) {
-        Err() << "House gop_seats value invalid in " << file_name;
+        Err() << "Senate gop_seats value invalid in " << file_name;
         return false;
     }
     senate_map_.mutable_seats()->set_gop(v);
@@ -399,11 +399,11 @@ Campaign::InitSenate(const IniFile& file, std::string_view file_name)
 
     iter = section.find("dem_seats_for_control");
     if (iter == section.end()) {
-        Err() << "House dem_seats_for_control not found in " << file_name;
+        Err() << "Senate dem_seats_for_control not found in " << file_name;
         return false;
     }
     if (!ParseInt(iter->second, &v)) {
-        Err() << "House dem_seats_for_control value invalid in " << file_name;
+        Err() << "Senate dem_seats_for_control value invalid in " << file_name;
         return false;
     }
     senate_map_.set_dem_seats_for_control(v);

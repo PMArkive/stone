@@ -247,6 +247,13 @@ Renderer::Generate()
         });
     }
 
+    cx_->workers().Do([this](ThreadPool*) -> void {
+        int index = (data_.history()[0].date() <= data_.election_day())
+                    ? 0 : 1;
+        HtmlGenerator generator(this, data_.history()[index], nullptr);
+        generator.RenderVoteShareGraphs();
+    });
+
     cx_->workers().RunCompletionTasks();
 
     if (!all_rendered)
@@ -320,7 +327,6 @@ void
 Renderer::AddGraphCommands(nlohmann::json& obj, const std::vector<GraphCommand>& commands,
                            const Date& date)
 {
-    std::unique_lock<std::mutex> lock(lock_);
     for (const auto& [race_type, graph_type] : commands) {
         auto date_str = ke::StringPrintf("%d-%d-%d", date.month(), date.day(), date.year());
         auto path = SuffixedName("graph-" + race_type + "-" + graph_type + ".svg", date);
@@ -330,10 +336,17 @@ Renderer::AddGraphCommands(nlohmann::json& obj, const std::vector<GraphCommand>&
         argv.emplace_back(race_type);
         argv.emplace_back(std::move(date_str));
         argv.emplace_back(OutputPath(path));
-        graph_commands_.emplace_back(std::move(argv));
+        AddGraphCommands(std::move(argv));
 
         obj[race_type + "_" + graph_type + "_img"] = path;
     }
+}
+
+void
+Renderer::AddGraphCommands(std::vector<std::string>&& commands)
+{
+    std::unique_lock<std::mutex> lock(lock_);
+    graph_commands_.emplace_back(std::move(commands));
 }
 
 bool
@@ -977,6 +990,92 @@ HtmlGenerator::RenderWrongometer()
     obj["map_svg"] = map_contents;
 
     renderer_->RenderTo("wrongometer.html.tpl", obj, "wrongometer.html");
+}
+
+void
+HtmlGenerator::RenderVoteShareGraphs()
+{
+    nlohmann::json meta_obj;
+
+    auto year_string = std::to_string(campaign_.election_day().year());
+    meta_obj["year"] = year_string;
+
+    const auto& date = data_.date();
+    auto date_str = ke::StringPrintf("%d-%d-%d", date.month(), date.day(), date.year());
+
+    if (campaign_.presidential_year()) {
+        std::vector<nlohmann::json> entries;
+
+        nlohmann::json obj = meta_obj;
+        obj["race_type"] = "President";
+
+        for (const auto& model : data_.states()) {
+            if (model.polls().empty())
+                continue;
+
+            const auto& info = campaign_.states()[model.race_id()];
+
+            nlohmann::json obj;
+            obj["region"] = info.name();
+            obj["dem_candidate"] = campaign_.dem_pres();
+            obj["gop_candidate"] = campaign_.gop_pres();
+
+            auto image_path = "votes-pres-" + info.code() + "-" + year_string + ".png";
+            std::vector<std::string> argv = {
+                "vote_share",
+                "president:" + std::to_string(model.race_id()),
+                date_str,
+                renderer_->OutputPath(image_path),
+            };
+            renderer_->AddGraphCommands(std::move(argv));
+
+            obj["graph_image"] = std::move(image_path);
+
+            entries.emplace_back(std::move(obj));
+        }
+
+        obj["entries"] = std::move(entries);
+
+        renderer_->RenderTo("vote_shares.html.tpl", obj, "vote_share_states.html");
+    }
+
+    // Senate graphs.
+    {
+        std::vector<nlohmann::json> entries;
+
+        nlohmann::json obj = meta_obj;
+        obj["race_type"] = "Senate";
+
+        for (const auto& model : data_.senate_races()) {
+            if (model.polls().empty())
+                continue;
+
+            const auto& info = campaign_.senate().races()[model.race_id()];
+
+            nlohmann::json obj;
+            obj["region"] = info.region();
+            obj["dem_candidate"] = info.dem().name();
+            obj["gop_candidate"] = info.gop().name();
+
+            auto image_path = "votes-senate-" + std::to_string(model.race_id()) + "-" +
+                              year_string + ".png";
+            std::vector<std::string> argv = {
+                "vote_share",
+                "senate:" + std::to_string(model.race_id()),
+                date_str,
+                renderer_->OutputPath(image_path),
+            };
+            renderer_->AddGraphCommands(std::move(argv));
+
+            obj["graph_image"] = std::move(image_path);
+
+            entries.emplace_back(std::move(obj));
+        }
+
+        obj["entries"] = std::move(entries);
+
+        renderer_->RenderTo("vote_shares.html.tpl", obj, "vote_share_senate.html");
+    }
 }
 
 bool
