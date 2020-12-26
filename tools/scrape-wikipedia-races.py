@@ -109,9 +109,12 @@ def get_candidates(args, td):
     if lis:
         for li in lis:
             text = unidecode.unidecode(li.get_text())
+            if text.startswith('Y '):
+                text = text[2:]
             m = re.search(kPattern, text)
             if m is None:
                 continue
+            matches.append(m)
     else:
         text = unidecode.unidecode(td.get_text())
         for m in re.finditer(kPattern, text):
@@ -218,9 +221,15 @@ def find_districts(args, table):
         if who is None:
             continue
 
+        def get_name(who):
+            parts = who.split(' ')
+            if len(parts) <= 2 or '.' in parts[1]:
+                return parts[-1]
+            return ' '.join(parts[1:])
+
         obj = {
-            'dem': who[0].split(' ')[-1],
-            'gop': who[1].split(' ')[-1],
+            'dem': get_name(who[0]),
+            'gop': get_name(who[1]),
             'current_holder': party,
         }
         if district in Districts:

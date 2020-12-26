@@ -2,7 +2,11 @@
  <thead>
   <tr>
    {% if race_has_ev %}
+   {% if exists("show_rating") %}
+   <th colspan="4" style="text-align: center;">Polls</th>
+   {% else %}
    <th colspan="3" style="text-align: center;">Polls</th>
+   {% endif %}
    <th colspan="2">Tipping Points</th>
    {% else %}
    <th colspan="3" style="text-align: center;">Other</th>

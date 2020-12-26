@@ -31,6 +31,8 @@ message Poll {
   bool tracking = 14;
   int32 grade = 15;
   bool partisan = 16;
+  bool final_result = 17;
+  bool too_close_to_call = 18;
 }
 
 message PollList {

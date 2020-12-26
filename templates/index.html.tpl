@@ -99,7 +99,9 @@
  The map is colored based on the Presidential polling margins for each state. Down-ballot races are below the map. {% if is_prediction %} Look near the tipping points to decide which races need support.{% else %} The change is the difference between the predicted polling margin and the actual outcome.{% endif %}
  {% else %}
  The "tipping-point" race, or first state to cross a senate majority, is highlighted yellow below. {% if is_prediction %} Click on the arrow next to a race to see the most recent polls.<br>
+ {% if is_prediction %}
  Only races with polls are shown. Early in the cycle, competitive races may not yet be polled. We score races for the incumbent or presumed party until data is available.{% else %} The change is the difference between the predicted polling margin and the actual outcome.{% endif %}
+ {% endif %}
  {% endif %}
  </p>
  {% if is_presidential_year %}
@@ -114,8 +116,12 @@
  {% if is_presidential_year %}
   <object type="image/svg+xml" data="{{ map_img }}" class="map_image"></object>
   {% if no_senate_mm == false %}
-  <p>Senate races. Only races with polls are shown. Early in the cycle, competitive races may
-     not yet be polled. We score races for the incumbent or presumed party until data is available.</p>
+   {% if is_prediction %}
+   <p>Senate races. Only races with polls are shown. Early in the cycle, competitive races may
+      not yet be polled. We score races for the incumbent or presumed party until data is available.</p>
+   {% else %}
+   <p>Final Senate results. TBD means the race is still undetermined.</p>
+   {% endif %}
   {{ senate_table_content }}
   {% else %}
    {% if not backdated %}
@@ -124,11 +130,20 @@
   {% endif %}
  {% endif %}
  {% if has_governor_data == true %}
- <p>Governor races. Only races with polls are shown.</p>
+  {% if is_prediction %}
+  <p>Gubernatorial races. Only races with polls are shown.</p>
+  {% else %}
+  <p>Final Gubernatorial results. TBD means the race is still undetermined.</p>
+  {% endif %}
  {{ governor_table_content }}
  {% endif %}
  {% if has_house_data == true %}
- <p>House races. If no polls are available, we use expert ratings, and only show close races.</p>
+   {% if is_prediction %}
+   <p>House races. If no polls are available, we use expert ratings, and only show close races.</p>
+   {% else %}
+   <p>Final House results. TBD means the race is still undetermined. For brevity, we only include
+      the races near the majority tipping point.</p>
+   {% endif %}
  {{ house_table_content }}
  {% endif %}
  </div>

@@ -154,7 +154,7 @@ def dump_priors_new(args, table):
     assert first_pct_index is not None
     assert second_pct_index is not None
 
-    if args.year in [2016, 2012, 2008]:
+    if args.year in [2020, 2016, 2012, 2008]:
         dem_index = first_pct_index
         gop_index = second_pct_index
     elif args.year in [2000, 2004]:

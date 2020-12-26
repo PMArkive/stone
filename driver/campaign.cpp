@@ -616,9 +616,17 @@ template <typename T>
 static const Race*
 FindRace(const T& map, const std::string& region)
 {
+    auto region_parts = ke::Split(region, "/");
+
     for (const auto& iter : map.races()) {
         if (iter.region() == region)
             return &iter;
+        if (region_parts.size() == 2 &&
+            iter.region() == region_parts[0] &&
+            iter.seat_name() == region_parts[1])
+        {
+            return &iter;
+        }
     }
     return nullptr;
 }

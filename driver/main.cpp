@@ -155,6 +155,7 @@ Driver::Run()
         (*out_.mutable_state_codes())[state_name] = state_code;
 
     *out_.mutable_election_day() = cc_->EndDate();
+    *out_.mutable_start_date() = cc_->StartDate();
 
     Predictor pr(cx_, cc_, &out_);
     pr.Predict();
@@ -279,6 +280,9 @@ MakePollFromMargins(const Date& date, const std::pair<double, double>& margins)
     poll.set_dem(margins.first);
     poll.set_gop(margins.second);
     poll.set_margin(margins.first - margins.second);
+    poll.set_final_result(true);
+    if (!poll.margin())
+        poll.set_too_close_to_call(true);
     return poll;
 }
 

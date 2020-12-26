@@ -305,6 +305,13 @@ SenateAnalysis::ComputeRace(const Race& race, RaceModel* model)
         return;
     }
 
+    auto polls = model->polls();
+    if (polls[polls.size() - 1].final_result() &&
+        polls[polls.size() - 1].too_close_to_call())
+    {
+        model->set_too_close_to_call(true);
+    }
+
     ComputePollModelStats(model);
 
     // Probability of dems winning.
@@ -436,6 +443,12 @@ HouseAnalysis::Analyze(const Date& today)
         }
 
         if (!model.polls().empty()) {
+            auto& polls = model.polls();
+            if (polls[polls.size() - 1].final_result() &&
+                polls[polls.size() - 1].too_close_to_call())
+            {
+                model.set_too_close_to_call(true);
+            }
             ComputePollModelStats(&model);
             model.set_win_prob(DemWinProb(model));
         } else {

@@ -33,6 +33,7 @@ message CampaignData {
 
   // "presidential", "midyear", "runoff"
   string election_type = 15;
+  Date start_date = 16;
 }
 
 message FinalResults {

@@ -29,6 +29,7 @@
 
 #include <date/date.h>
 #include <proto/poll.pb.h>
+#include <proto/state.pb.h>
 
 namespace stone {
 
@@ -129,6 +130,12 @@ static inline double RoundMargin(double margin)
     if (round(margin * 10.0) == 0.0)
         return 0.0;
     return margin;
+}
+
+static inline std::string SeatName(const Race& race) {
+    if (race.seat_name().empty())
+        return race.region();
+    return race.region() + " - " + race.seat_name();
 }
 
 extern std::string gTimezoneName;

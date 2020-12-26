@@ -32,6 +32,7 @@
 #include <amtl/am-string.h>
 #include <amtl/am-time.h>
 #include <amtl/am-vector.h>
+#include <amtl/experimental/am-argparser.h>
 #include <inja/inja.hpp>
 #include "campaign.h"
 #include "logging.h"
@@ -41,6 +42,8 @@
 namespace stone {
 
 using namespace std::string_literals;
+
+ke::args::ToggleOption not_backdating(nullptr, "--not-backdating", ke::Some(false), "Override backdating");
 
 Renderer::Renderer(Context* cx, const CampaignData& data)
   : cx_(cx),
@@ -171,7 +174,10 @@ Renderer::Generate()
             PErr() << "Unable to get the current time";
             return false;
         }
-        backdating_ = (tm.tm_year + 1900 != data_.election_day().year());
+
+        backdating_ = (tm.tm_year + 1900 != data_.election_day().year()) &&
+                      (tm.tm_year + 1900 != data_.start_date().year()) &&
+                      !not_backdating.value();
     }
 
     // Check whether we should regenerate everything.
@@ -460,8 +466,12 @@ IsSlimMargin(double d)
 static std::string
 DoubleToString(double d, bool is_precise = false)
 {
-    if (is_precise && IsSlimMargin(d))
-        return ke::StringPrintf("%.2f", d);
+    if (is_precise && IsSlimMargin(d)) {
+        auto temp = ke::StringPrintf("%.6f", d);
+        while (ke::EndsWith(temp, "0") && !ke::EndsWith(temp, ".0"))
+            temp.pop_back();
+        return temp;
+    }
     return ke::StringPrintf("%.1f", d);
 }
 
@@ -505,8 +515,10 @@ HtmlGenerator::AddWinner(nlohmann::json& obj, const std::string& prefix, double 
         obj[prefix + "_class"] = "tie";
         if (is_wrongometer_)
             obj[prefix + "_text"] = "Tie";
-        else
+        else if (is_prediction_)
             obj[prefix + "_text"] = "Even";
+        else
+            obj[prefix + "_text"] = "TBD";
     } else {
         if (value > 0)
             obj[prefix + "_text"] = "D+" + DoubleToString(value, is_precise);
@@ -772,12 +784,15 @@ HtmlGenerator::RenderMain(const std::string& path)
 
             for (const auto& race : data_.senate_races()) {
                 const auto& race_info = campaign_.senate().races()[race.race_id()];
-                if (race.margin() > 0.0)
+                if (race.margin() > 0.0) {
                     seats.set_dem(seats.dem() + 1);
-                else if (race.margin() < 0.0)
+                } else if (race.margin() < 0.0) {
                     seats.set_gop(seats.gop() + 1);
-                else
-                    Fatal() << "Senate race has no margin: " << race_info.region();
+                } else if (race.too_close_to_call()) {
+                    Out() << "WARNING: Senate race is too close to call: " << SeatName(race_info);
+                } else {
+                    Fatal() << "Senate race has no margin: " << SeatName(race_info);
+                }
             }
 
             AddMapEv("actual_senate", seats, true);
@@ -829,6 +844,8 @@ HtmlGenerator::RenderMain(const std::string& path)
                     totals.set_dem(totals.dem() + 1);
                 } else if (race.margin() < 0.0) {
                     totals.set_gop(totals.gop() + 1);
+                } else if (race.too_close_to_call()) {
+                    Out() << "WARNING: House race is too close to call: " << SeatName(race_info);
                 } else {
                     Fatal() << "Margin is even! Race: " << race_info.region();
                 }
@@ -1204,8 +1221,10 @@ HtmlGenerator::RenderSenate()
 
         const RepeatedPoll* prev_polls = nullptr;
         if (auto iter = prev_races.find(race.race_id()); iter != prev_races.end()) {
-            RenderDelta(entry, iter->second->margin(), race.margin());
             prev_polls = &iter->second->polls();
+            if (!race.too_close_to_call() && !prev_polls->empty()) {
+                RenderDelta(entry, iter->second->margin(), race.margin());
+            }
         }
 
         if (!AddPollData(entry, race.polls(), prev_polls))
@@ -1336,6 +1355,12 @@ HtmlGenerator::RenderHouse()
                house_map.races()[b->race_id()].region();
     });
 
+    std::unordered_map<int, const RaceModel*> prev_races;
+    if (prev_data_) {
+        for (const auto& race : prev_data_->house_races())
+            prev_races[race.race_id()] = &race;
+    }
+
     // After election day, trim seats that are not interesting, pruning any
     // from the D and R long tail that had no ratings, and were > the
     // metamargin.
@@ -1345,7 +1370,12 @@ HtmlGenerator::RenderHouse()
             house_mm = {data_.house_mm()};
 
         auto filter_race = [&](const RaceModel& model) -> bool {
-            if (model.rating().empty() || model.rating() == "safe") {
+            auto iter = prev_races.find(model.race_id());
+            const RaceModel* prev_model = (iter == prev_races.end()) ? nullptr : iter->second;
+
+            if (!prev_model ||
+                (prev_model->rating().empty() || ke::StartsWith(prev_model->rating(), "safe")))
+            {
                 if (!house_mm)
                     return true;
                 if (abs(model.margin()) > abs(*house_mm) + 2.0)
@@ -1366,12 +1396,6 @@ HtmlGenerator::RenderHouse()
             add_implied_seat(*races.back());
             races.pop_back();
         }
-    }
-
-    std::unordered_map<int, const RaceModel*> prev_races;
-    if (prev_data_) {
-        for (const auto& race : prev_data_->house_races())
-            prev_races[race.race_id()] = &race;
     }
 
     // Dems count starting from their solid seats. Rs start counting assuming
@@ -1397,15 +1421,11 @@ HtmlGenerator::RenderHouse()
         }
         if (!race->polls().empty()) {
             AddPollWinner(entry, "margin", *race);
-
-            // After election day, include the final rating.
-            if (!is_prediction_)
-                AddWinnerRating(entry, "rating", *race);
         } else if (is_prediction_) {
             // Only show the rating if no margin is available.
             AddWinnerRating(entry, "margin", *race);
         } else {
-            Err() << "Race " << race_info.region() << " has no margin";
+            Fatal() << "Race " << race_info.region() << " has no margin";
             return false;
         }
 
@@ -1444,9 +1464,13 @@ HtmlGenerator::RenderHouse()
                     entry["dt_value"] = "Toward R";
                     entry["dt_class"] = "tie";
                 }
-            } else {
+            } else if (!race->too_close_to_call() && prev_polls && !prev_polls->empty()) {
                 RenderDelta(entry, prev_margin, race->margin());
             }
+
+            // After election day, include the final rating.
+            if (prev_race && !is_prediction_)
+                AddWinnerRating(entry, "rating", *prev_race);
         }
 
         if (!AddPollData(entry, race->polls(), prev_polls))
@@ -1583,8 +1607,10 @@ HtmlGenerator::RenderGovernor()
 
         const RepeatedPoll* prev_polls = nullptr;
         if (auto iter = prev_races.find(race.race_id()); iter != prev_races.end()) {
-            RenderDelta(entry, iter->second->margin(), race.margin());
             prev_polls = &iter->second->polls();
+            if (!race.too_close_to_call() && !prev_polls->empty()) {
+                RenderDelta(entry, iter->second->margin(), race.margin());
+            }
         }
 
         if (!AddPollData(entry, race.polls(), prev_polls))
