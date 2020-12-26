@@ -105,6 +105,7 @@ Driver::Run()
     out_.set_dem_pres(cc_->dem_pres());
     out_.set_gop_pres(cc_->gop_pres());
     out_.set_last_updated(GetUtcTime());
+    out_.set_election_type(cc_->election_type());
     for (const auto& important_date : cc_->important_dates())
         *out_.mutable_important_dates()->Add() = important_date;
 

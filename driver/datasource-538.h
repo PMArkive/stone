@@ -25,8 +25,9 @@ class Context;
 class DataSource538 final
 {
   public:
-    static std::optional<Feed> Fetch2020(Context* cx, Campaign* cc);
-    static std::optional<Feed> Fetch2018(Context* cx, Campaign* cc);
+    static std::optional<Feed> Fetch(Context* cx, Campaign* cc);
+
+  private:
     static std::optional<Feed> Fetch2016(Context* cx, const SenateMap& senate_map);
 };
 

@@ -92,20 +92,7 @@ Campaign::Fetch(Context* cx)
     std::optional<Feed> feed;
 
     if (default_feed_ == "fivethirtyeight") {
-        switch (end_date_.year()) {
-            case 2020:
-                feed = DataSource538::Fetch2020(cx, this);
-                break;
-            case 2018:
-                feed = DataSource538::Fetch2018(cx, this);
-                break;
-            case 2016:
-                feed = DataSource538::Fetch2016(cx, senate_map_);
-                break;
-            default:
-                Err() << "No 538 feeds found";
-                break;
-        }
+        feed = DataSource538::Fetch(cx, this);
     } else if (default_feed_ == "rcp") {
         feed = DataSourceRcp::Fetch(cx, this);
     } else {
@@ -257,10 +244,11 @@ Campaign::InitMain(const IniFile& file, std::string_view file_name)
     }
     if (iter->second == "president") {
         is_presidential_year_ = true;
-    } else if (iter->second != "midyear") {
+    } else if (iter->second != "midyear" && iter->second != "runoff") {
         Err() << "Unknown campaign type in " << file_name;
         return false;
     }
+    election_type_ = iter->second;
 
     iter = section.find("undecideds");
     if (iter == section.end()) {
@@ -528,7 +516,13 @@ Campaign::InitRaceList(const std::string& file_path, Race_RaceType race_type,
 
     for (const auto& [region, kv] : file) {
         Race r;
-        r.set_region(region);
+
+        auto region_parts = ke::Split(region, "/");
+        r.set_region(region_parts[0]);
+        if (region_parts.size() > 1) {
+            assert(region_parts.size() == 2);
+            r.set_seat_name(region_parts[1]);
+        }
         r.set_type(race_type);
         r.set_race_id((int)races->size());
 

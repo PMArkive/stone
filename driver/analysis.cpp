@@ -51,7 +51,7 @@ StateAnalysis::StateAnalysis(Context* cx, Campaign* cc, const Feed* feed, ModelD
 void
 StateAnalysis::Analyze()
 {
-    if (!feed_->generic_ballot_polls().empty()) {
+    if (!feed_->generic_ballot_polls().empty() && cc_->election_type() != "runoff") {
         RaceModel& model = *data_->mutable_generic_ballot();
         model.set_race_id(0);
         model.set_race_type(Race::GENERIC_BALLOT);

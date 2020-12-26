@@ -30,6 +30,9 @@ message CampaignData {
   // final meta-margins. Some things, like the electoral college results, cannot
   // be expressed as polls, so these are tracked in a separate struct.
   FinalResults results = 14;
+
+  // "presidential", "midyear", "runoff"
+  string election_type = 15;
 }
 
 message FinalResults {

@@ -1181,8 +1181,7 @@ HtmlGenerator::RenderSenate()
 
         auto iter = kStateCodes.find(race_info.region());
         if (iter == kStateCodes.end()) {
-            Err() << "Could not find code for state: " << race_info.region();
-            return false;
+            Fatal() << "Could not find code for state: " << race_info.region();
         }
 
         nlohmann::json entry;
@@ -1565,8 +1564,7 @@ HtmlGenerator::RenderGovernor()
 
         auto iter = kStateCodes.find(race_info.region());
         if (iter == kStateCodes.end()) {
-            Err() << "Could not find code for state: " << race_info.region();
-            return false;
+            Fatal() << "Could not find code for state: " << race_info.region();
         }
 
         nlohmann::json entry;
@@ -1807,12 +1805,13 @@ HtmlGenerator::RenderSeatChange(const std::string& prefix, int change)
 {
     auto class_key = prefix + "_class";
     auto text_key = prefix + "_text";
+    auto suffix = abs(change) > 1 ? "s"s : ""s;
     if (change > 0 ){
         main_[class_key] = "dem";
-        main_[text_key] = "D +" + std::to_string(change) + " seats";
+        main_[text_key] = "D +" + std::to_string(change) + " seat" + suffix;
     } else if (change < 0) {
         main_[class_key] = "gop";
-        main_[text_key] = "R +" + std::to_string(-change) + " seats";
+        main_[text_key] = "R +" + std::to_string(-change) + " seat" + suffix;
     } else {
         main_[class_key] = "tie";
         main_[text_key] = "No net change";

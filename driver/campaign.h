@@ -98,6 +98,7 @@ class Campaign
     const std::unordered_map<Race_RaceType, RaceResult>& national_race_results() const {
         return national_race_results_;
     }
+    const std::string& election_type() const { return election_type_; }
 
   private:
     bool InitMain(const IniFile& file, std::string_view file_name);
@@ -135,6 +136,7 @@ class Campaign
     std::unordered_map<std::string, int> district_to_house_race_;
     std::vector<ImportantDate> important_dates_;
     HouseRatingHistory house_history_;
+    std::string election_type_;
 
     std::unordered_map<Race_RaceType, RaceResultMap> race_results_;
     std::unordered_map<Race_RaceType, RaceResult> national_race_results_;

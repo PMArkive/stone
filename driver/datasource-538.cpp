@@ -262,6 +262,9 @@ FetchPollsV2(Context* cx, Campaign* cc, std::string_view dem = {}, std::string_v
             else
                 *states[state_name].mutable_polls()->Add() = std::move(poll.value());
         } else if (raw["type"].GetString() == "generic-ballot"s) {
+            if (cc->election_type() == "runoff")
+                continue;
+
             std::string dem, gop;
             auto poll = ExtractGenericPoll2020(cc, raw, &dem, &gop);
             if (!poll)
@@ -356,18 +359,6 @@ FetchPollsV2(Context* cx, Campaign* cc, std::string_view dem = {}, std::string_v
     }
 
     return {std::move(feed)};
-}
-
-std::optional<Feed>
-DataSource538::Fetch2020(Context* cx, Campaign* cc)
-{
-    return FetchPollsV2(cx, cc, "Biden", "Trump");
-}
-
-std::optional<Feed>
-DataSource538::Fetch2018(Context* cx, Campaign* cc)
-{
-    return FetchPollsV2(cx, cc);
 }
 
 static void
@@ -547,6 +538,23 @@ DataSource538::Fetch2016(Context* cx, const SenateMap& senate_map)
     }
 
     return {std::move(normal)};
+}
+
+std::optional<Feed>
+DataSource538::Fetch(Context* cx, Campaign* cc)
+{
+    switch (cc->EndDate().year()) {
+        case 2020:
+            return FetchPollsV2(cx, cc, "Biden", "Trump");
+        case 2021:
+        case 2018:
+            return FetchPollsV2(cx, cc);
+        case 2016:
+            return DataSource538::Fetch2016(cx, cc->senate_map());
+        default:
+            Err() << "No 538 feeds found";
+            return {};
+    }
 }
 
 } // namespace stone

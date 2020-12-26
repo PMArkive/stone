@@ -34,7 +34,7 @@ message Race {
   string current_holder = 6;
   string rating = 7;
   int32 race_id = 8;
-  string subregion = 9;
+  string seat_name = 9;
 };
 
 message MapEv {
