@@ -203,6 +203,9 @@ FetchPollsV2(Context* cx, Campaign* cc, std::string_view dem = {}, std::string_v
 
     std::unordered_map<std::string, size_t> senate_map_index_map;
     for (const auto& seat : senate_map.races()) {
+        // Ignore jungle races since we don't model those yet.
+        if (seat.is_jungle())
+            continue;
         auto key = seat.dem().name() + "/" + seat.gop().name();
         senate_map_index_map[key] = seat.race_id();
     }

@@ -85,7 +85,7 @@ class HtmlGenerator
     static constexpr double kSafeMargin = 5.0;
 
     void AddWinner(nlohmann::json& obj, const std::string& prefix, double value,
-                   bool is_precise = false);
+                   bool is_precise = false, bool allow_tbd = true);
     void AddWinnerRating(nlohmann::json& obj, const std::string& prefix, const RaceModel& model,
                          double safe_zone = kSafeMargin);
     void AddPollWinner(nlohmann::json& obj, const std::string& prefix, const RaceModel& model);

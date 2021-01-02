@@ -195,6 +195,18 @@ SenateAnalysis::Analyze()
     int total_seats = cc_->senate_map().seats().dem() + cc_->senate_map().seats().gop();
     int dem_seats_needed = cc_->senate_map().dem_seats_for_control();
 
+    // If dem_seats_needed is odd, and we know Ds got the presidency, then
+    // we need to adjust the bias accordingly.
+    if (data_->date() > cc_->EndDate() && (dem_seats_needed & 1)) {
+        auto iter = cc_->national_race_results().find(Race::ELECTORAL_COLLEGE);
+        if (iter != cc_->national_race_results().end()) {
+            const auto& margins = iter->second;
+            if (margins.first > margins.second) {
+                dem_seats_needed--;
+            }
+        }
+    }
+
     auto safe_seats = data_->mutable_senate_safe_seats();
     safe_seats->set_dem(cc_->senate_map().seats().dem() - cc_->senate_map().seats_up().dem());
     safe_seats->set_gop(cc_->senate_map().seats().gop() - cc_->senate_map().seats_up().gop());
@@ -208,6 +220,8 @@ SenateAnalysis::Analyze()
         model.set_race_id(index);
         model.set_race_type(Race::SENATE);
 
+        // Ignore jungle races when flagged, since we have no way to distinguish
+        // the true 2-party margin.
         auto iter = feed_->senate_polls().find(index);
         if (iter != feed_->senate_polls().end())
             FindRecentPolls(iter->second.polls(), model.mutable_polls());

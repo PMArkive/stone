@@ -507,7 +507,7 @@ HtmlGenerator::AddPollWinner(nlohmann::json& obj, const std::string& prefix,
 
 void
 HtmlGenerator::AddWinner(nlohmann::json& obj, const std::string& prefix, double value,
-                         bool is_precise)
+                         bool is_precise, bool allow_tbd)
 {
     if (value == 0 || (!is_precise && IsSlimMargin(value)) ||
         (is_wrongometer_ && value < 1.0 && value > -1.0))
@@ -515,7 +515,7 @@ HtmlGenerator::AddWinner(nlohmann::json& obj, const std::string& prefix, double 
         obj[prefix + "_class"] = "tie";
         if (is_wrongometer_)
             obj[prefix + "_text"] = "Tie";
-        else if (is_prediction_)
+        else if (is_prediction_ || !allow_tbd)
             obj[prefix + "_text"] = "Even";
         else
             obj[prefix + "_text"] = "TBD";
@@ -668,24 +668,24 @@ HtmlGenerator::RenderMain(const std::string& path)
         return false;
     obj["date"] = text;
 
-    AddWinner(obj, "mm", data_.metamargin());
+    AddWinner(obj, "mm", data_.metamargin(), false, false);
     if (data_.senate_can_flip()) {
         obj["no_senate_mm"] = false;
-        AddWinner(obj, "smm", data_.senate_mm());
+        AddWinner(obj, "smm", data_.senate_mm(), false, false);
     } else {
         obj["no_senate_mm"] = true;
     }
     if (data_.date() > campaign_.election_day() && prev_data_->senate_can_flip())
-        AddWinner(obj, "psmm", prev_data_->senate_mm());
+        AddWinner(obj, "psmm", prev_data_->senate_mm(), false, false);
 
     if (data_.house_can_flip()) {
         obj["has_house_mm"] = true;
-        AddWinner(obj, "hmm", data_.house_mm());
+        AddWinner(obj, "hmm", data_.house_mm(), false, false);
     } else {
         obj["has_house_mm"] = false;
     }
     if (data_.date() > campaign_.election_day() && prev_data_->house_can_flip())
-        AddWinner(obj, "phmm", prev_data_->house_mm());
+        AddWinner(obj, "phmm", prev_data_->house_mm(), false, false);
 
     int total_evs = 0;
     for (const auto& state : campaign_.states())
@@ -702,7 +702,7 @@ HtmlGenerator::RenderMain(const std::string& path)
         predicted_ev.set_dem(prev_data_->dem_ev_mode());
         predicted_ev.set_gop(total_evs - predicted_ev.dem());
         AddMapEv("predicted_ev", predicted_ev, false, campaign_.dem_pres(), campaign_.gop_pres());
-        AddWinner(obj, "pmm", prev_data_->metamargin());
+        AddWinner(obj, "pmm", prev_data_->metamargin(), false, false);
         AddMapEv("actual_ev", campaign_.results().evs(), true, campaign_.dem_pres(),
                  campaign_.gop_pres());
 
@@ -1741,7 +1741,9 @@ HtmlGenerator::BuildPollRows(const std::vector<const Poll*>& polls, const std::s
             pe["gop"] = "";
         pe["url"] = poll.url();
         pe["weight"] = poll.weight();
-        AddWinner(pe, "margin", RoundMargin(poll.margin()));
+        AddWinner(pe, "margin", RoundMargin(poll.margin()),
+                  (!is_prediction_ && icon == "new") /* is_precise */,
+                  icon == "new" /* allow_tbd */);
         out->emplace_back(std::move(pe));
     }
     return true;

@@ -555,6 +555,10 @@ Campaign::InitRaceList(const std::string& file_path, Race_RaceType race_type,
         if (iter != kv.end())
             *(r.mutable_rating()) = iter->second;
 
+        iter = kv.find("type");
+        if (iter != kv.end() && iter->second == "jungle")
+            r.set_is_jungle(true);
+
         *races->Add() = std::move(r);
     }
     return true;
