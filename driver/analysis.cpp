@@ -485,6 +485,11 @@ HouseAnalysis::Analyze(const Date& today)
 
             // If a seat has no rating, we assume it's safe.
             if (rating.empty() || rating == "safe") {
+                if (race.cook_pvi() > 0)
+                    presumed_winner = "dem";
+                else
+                    presumed_winner = "gop";
+
                 if (presumed_winner == "gop") {
                     safe_gop++;
                     if (race.current_holder() == "dem") {

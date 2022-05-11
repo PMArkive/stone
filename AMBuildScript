@@ -11,7 +11,7 @@ class Stone(object):
       '-Wall',
       '-Werror',
       '-g3',
-      '-O3',
+      '-O0',
     ]
     builder.cxx.cxxflags += [
       '-std=c++17',

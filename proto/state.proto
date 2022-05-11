@@ -36,6 +36,7 @@ message Race {
   int32 race_id = 8;
   string seat_name = 9;
   bool is_jungle = 10;
+  int32 cook_pvi = 11;
 };
 
 message MapEv {

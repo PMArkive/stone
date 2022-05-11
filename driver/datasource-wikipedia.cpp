@@ -67,6 +67,9 @@ DataSourceWikipedia::FetchHouseRatings(Context* cx, Campaign* cc, int year, Hous
 {
     std::string url;
     switch (year) {
+        case 2022:
+            url = "https://en.wikipedia.org/wiki/2022_United_States_House_of_Representatives_election_ratings";
+            break;
         case 2020:
             url = "https://en.wikipedia.org/wiki/2020_United_States_House_of_Representatives_election_ratings";
             break;

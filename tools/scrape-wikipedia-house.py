@@ -23,7 +23,7 @@ def fix_district_name(district):
     return district
 
 def scale_rating(text):
-    if "Safe D" in text:
+    if "Safe D" in text or "Solid D" in text:
         return 3
     elif "Likely D" in text:
         return 2
@@ -35,8 +35,10 @@ def scale_rating(text):
         return -1
     elif "Likely R" in text:
         return -2
-    elif "Safe R" in text:
+    elif "Safe R" in text or "Solid R" in text:
         return -3
+    elif "N/A":
+        return None
     else:
         raise Exception('Unknown rating: {}'.format(text))
 
@@ -105,6 +107,8 @@ def main():
         #    chosen_code = 0
         chosen_code = cook_code
 
+        if chosen_code is None:
+            continue
         if chosen_code > 0:
             rating.presumed_winner = 'dem'
         elif chosen_code < 0:

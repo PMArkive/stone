@@ -97,9 +97,22 @@ static int32_t GetGradeValue(const JsonObject& raw) {
     return grade;
 }
 
-static Poll
+static std::optional<Poll>
 FillPollData(Campaign* cc, const JsonObject& raw, const JsonValue* dem, const JsonValue* gop)
 {
+    Poll poll;
+    if (!ParseYyyyMmDd(raw["startDate"].GetString(), poll.mutable_start()) ||
+        !ParseYyyyMmDd(raw["endDate"].GetString(), poll.mutable_end()) ||
+        !ParseYyyyMmDd(raw["created_at"].GetString(), poll.mutable_published()))
+    {
+        Err() << "WARNING: bad date value";
+        return {};
+    }
+
+    // Filter out polls from the previous cycle.
+    if (poll.end().year() < cc->StartDate().year() - 1)
+        return {};
+
     double dem_pct, gop_pct;
     if (!ParseFloat((*dem)["pct"].GetString(), &dem_pct) ||
         !ParseFloat((*gop)["pct"].GetString(), &gop_pct))
@@ -108,12 +121,17 @@ FillPollData(Campaign* cc, const JsonObject& raw, const JsonValue* dem, const Js
         return {};
     }
 
-    Poll poll;
+    const auto& url = raw["url"];
+    if (url.IsNull()) {
+        Err() << "WARNING: no URL, private poll?";
+        return {};
+    }
+
     poll.set_description(raw["pollster"].GetString());
     poll.set_dem(dem_pct);
     poll.set_gop(gop_pct);
     poll.set_margin(dem_pct - gop_pct);
-    poll.set_url(raw["url"].GetString());
+    poll.set_url(url.GetString());
     poll.set_id(raw["id"].GetString());
     poll.set_grade(GetGradeValue(raw));
     poll.set_partisan(raw.HasMember("partisan"));
@@ -136,14 +154,7 @@ FillPollData(Campaign* cc, const JsonObject& raw, const JsonValue* dem, const Js
         poll.set_sample_type(type);
     }
 
-    if (!ParseYyyyMmDd(raw["startDate"].GetString(), poll.mutable_start()) ||
-        !ParseYyyyMmDd(raw["endDate"].GetString(), poll.mutable_end()) ||
-        !ParseYyyyMmDd(raw["created_at"].GetString(), poll.mutable_published()))
-    {
-        Err() << "WARNING: bad date value";
-        return {};
-    }
-    return poll;
+    return {poll};
 }
 
 static std::optional<Poll>
@@ -158,8 +169,7 @@ ExtractPresidentPoll2020(Campaign* cc, const JsonObject& raw, std::string_view d
     if ((*gop)["choice"].GetString() != gop_name || (*dem)["choice"].GetString() != dem_name)
         return {};
 
-    Poll poll = FillPollData(cc, raw, dem, gop);
-    return std::make_optional<Poll>(std::move(poll));
+    return FillPollData(cc, raw, dem, gop);
 }
 
 static std::optional<Poll>
@@ -174,8 +184,7 @@ ExtractGenericPoll2020(Campaign* cc, const JsonObject& raw, std::string* dem_can
     *dem_candidate = (*dem)["choice"].GetString();
     *gop_candidate = (*gop)["choice"].GetString();
 
-    Poll poll = FillPollData(cc, raw, dem, gop);
-    return std::make_optional<Poll>(std::move(poll));
+    return FillPollData(cc, raw, dem, gop);
 }
 
 std::optional<Feed>
@@ -549,6 +558,7 @@ DataSource538::Fetch(Context* cx, Campaign* cc)
     switch (cc->EndDate().year()) {
         case 2020:
             return FetchPollsV2(cx, cc, "Biden", "Trump");
+        case 2022:
         case 2021:
         case 2018:
             return FetchPollsV2(cx, cc);

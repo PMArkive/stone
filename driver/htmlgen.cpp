@@ -1222,7 +1222,7 @@ HtmlGenerator::RenderSenate()
         const RepeatedPoll* prev_polls = nullptr;
         if (auto iter = prev_races.find(race.race_id()); iter != prev_races.end()) {
             prev_polls = &iter->second->polls();
-            if (!race.too_close_to_call() && !prev_polls->empty()) {
+            if (!race.too_close_to_call()) {
                 RenderDelta(entry, iter->second->margin(), race.margin());
             }
         }

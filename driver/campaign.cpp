@@ -559,6 +559,15 @@ Campaign::InitRaceList(const std::string& file_path, Race_RaceType race_type,
         if (iter != kv.end() && iter->second == "jungle")
             r.set_is_jungle(true);
 
+        iter = kv.find("cook_pvi");
+        if (iter != kv.end()) {
+            int cook_pvi;
+            if (ParseInt(iter->second, &cook_pvi))
+                r.set_cook_pvi(cook_pvi);
+            else
+                Err() << "Invalid PVI for race " << region << " in " << file_path;
+        }
+
         *races->Add() = std::move(r);
     }
     return true;

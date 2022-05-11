@@ -137,21 +137,34 @@ def get_candidates(args, td):
     # Don't output one-sided races; however, do coalesce to TBD.
     if multi_dem:
         if gop is None:
-            return None
-        dem = "TBD"
+            if not args.everything:
+                return None
+            dem = "Multiple"
+            gop = "N/A"
+        else:
+            dem = "TBD"
     if multi_gop:
         if dem is None:
-            return None
+            if not args.everything:
+                return None
+            gop = "Multiple"
+            dem = "N/A"
         gop = "TBD"
 
-    if dem is None and args.allow_tbd:
-        dem = "TBD"
-    if dem is None and args.allow_empty:
-        dem = ""
-    if gop is None and args.allow_tbd:
-        gop = "TBD"
-    if gop is None and args.allow_empty:
-        gop = ""
+    if args.everything:
+        if dem is None:
+            dem = "TBD"
+        if gop is None:
+            gop = "TBD"
+    else:
+        if dem is None and args.allow_tbd:
+            dem = "TBD"
+        if dem is None and args.allow_empty:
+            dem = ""
+        if gop is None and args.allow_tbd:
+            gop = "TBD"
+        if gop is None and args.allow_empty:
+            gop = ""
 
     if dem is None or gop is None:
         return None
@@ -169,6 +182,7 @@ def find_districts(args, table):
     district_index = None
     candidate_index = None
     party_index = None
+    pvi_index = None
     for index, text in enumerate(headers):
         if text is None:
             break
@@ -180,6 +194,8 @@ def find_districts(args, table):
             candidate_index = index
         elif 'Party' in text:
             party_index = index
+        elif 'PVI' in text:
+            pvi_index = index
 
     if candidate_index is None or district_index != 0:
         return False
@@ -205,6 +221,9 @@ def find_districts(args, table):
         if district in kIgnoreRaces:
             continue
 
+        if args.everything and pvi_index is None:
+            continue
+
         party_text = tds[party_index + idx_offs].get_text()
         if "Republican" in party_text:
             party = "gop"
@@ -227,10 +246,20 @@ def find_districts(args, table):
                 return parts[-1]
             return ' '.join(parts[1:])
 
+        pvi_text = tds[pvi_index + idx_offs].get_text()
+        if "EVEN" in pvi_text.upper():
+            pvi = 0
+        else:
+            m = re.search("([DR])\+(\d+)", pvi_text)
+            pvi = int(m.group(2))
+            if m.group(1) == 'R':
+                pvi = -pvi
+
         obj = {
             'dem': get_name(who[0]),
             'gop': get_name(who[1]),
             'current_holder': party,
+            'cook_pvi': pvi,
         }
         if district in Districts:
             Districts[district].update(obj)
@@ -319,6 +348,7 @@ def main():
     parser.add_argument('--allow-tbd', default=False, action='store_true')
     parser.add_argument('--allow-empty', default=False, action='store_true')
     parser.add_argument('--sorted', default=False, action='store_true')
+    parser.add_argument('--everything', default=False, action='store_true')
     args = parser.parse_args()
 
     if args.old_ini_file:
