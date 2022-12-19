@@ -7,6 +7,7 @@ import os
 import re
 import sys
 import unidecode
+import us
 from collections import OrderedDict
 from configparser import ConfigParser
 
@@ -18,6 +19,9 @@ kIgnoreRaces = set([
     'United States Virgin Islands',
     'U.S. Virgin Islands',
 ])
+kStateNames = []
+
+gMarginMap = {}
 
 def fix_unicode(text):
     text = text.strip()
@@ -137,7 +141,7 @@ def get_candidates(args, td):
         return None
     return dem[1], gop[1]
 
-def find_districts(args, table):
+def find_districts_in_summary(args, table):
     ths = table.find_all('th')
     if not ths:
         return False
@@ -152,7 +156,7 @@ def find_districts(args, table):
     for index, text in enumerate(headers):
         if text is None:
             break
-        if 'District' in text or 'Location' in text or 'State' in text:
+        if 'District' in text or 'Location' in text or 'State' in text or 'Territory' in text:
             district_index = index
         elif 'Location' in text:
             district_index = index
@@ -212,20 +216,108 @@ def find_districts(args, table):
         if margins is None:
             continue
 
-        print('{} = {} - {}'.format(district, margins[0], margins[1]))
+        gMarginMap[district] = (margins[0], margins[1])
 
     return True
+
+def get_infobox_parties(th):
+    parties = {}
+    cursor = th
+    index = 0
+    while cursor:
+        cursor = cursor.find_next_sibling('td')
+        if not cursor:
+            break
+        if 'Democratic' in cursor.get_text():
+            parties[index] = 'D'
+        elif 'Republican' in cursor.get_text():
+            parties[index] = 'R'
+        index += 1
+
+    return parties
+
+def get_infobox_margins(th, party_map):
+    d_perc = None
+    r_perc = None
+
+    cursor = th
+    index = 0
+    while cursor:
+        cursor = cursor.find_next_sibling('td')
+        if not cursor:
+            break
+        if index in party_map:
+            text = cursor.get_text()
+            text = text.strip()
+            text = text.replace('%', '')
+            if party_map[index] == 'R':
+                r_perc = text
+            elif party_map[index] == 'D':
+                d_perc = text
+        index += 1
+
+    if r_perc is None or d_perc is None:
+        return None
+
+    return (d_perc, r_perc)
+
+def find_district_in_infobox(args, table):
+    captions = table.find_all('caption', class_ = 'infobox-title')
+    if not captions:
+        return
+    caption_text = captions[0].get_text()
+
+    # Note - this does not work on districts yet.
+    region = None
+    for state_name in kStateNames:
+        if state_name in caption_text:
+            region = state_name
+            break
+    if not region:
+        return
+
+    tds = table.find_all('td', class_ = 'infobox-full-data')
+    if not tds:
+        return
+    trs = tds[0].find_all('tr')
+    party_map = None
+    for tr in trs:
+        th = tr.find('th')
+        if th is None or th.parent != tr:
+            continue
+        if 'Party' in th.get_text():
+            party_map = get_infobox_parties(th)
+            continue
+        if 'Percentage' in th.get_text():
+            if not party_map:
+                return
+            margins = get_infobox_margins(th, party_map)
+            if not margins:
+                return
+            gMarginMap[region] = margins
+            break
 
 def main():
     parser = argparse.ArgumentParser()
     args = parser.parse_args()
+
+    kStateNames.append('Washington, D.C.')
+    for state in us.states.STATES:
+        kStateNames.append(state.name)
 
     text = sys.stdin.read()
     doc = bs4.BeautifulSoup(text, 'html.parser')
 
     tables = doc.find_all('table')
     for table in tables:
-        find_districts(args, table)
+        if 'infobox' in table.get('class', []):
+            find_district_in_infobox(args, table)
+        else:
+            find_districts_in_summary(args, table)
+
+    for key in sorted(gMarginMap.keys()):
+        margins = gMarginMap[key]
+        print('{} = {} - {}'.format(key, margins[0], margins[1]))
 
 if __name__ == '__main__':
     main()

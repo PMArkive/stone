@@ -277,8 +277,11 @@ Campaign::InitMain(const IniFile& file, std::string_view file_name)
 }
 
 std::optional<std::pair<double, double>>
-ParseMargins(const std::string& text, std::string_view file_name)
+ParseMargins(const std::string& text, std::string_view file_name, bool allow_tbd = false)
 {
+    if (allow_tbd && text == "TBD")
+        return {{0, 0}};
+
     auto parts = ke::Split(text, " - ");
 
     if (parts.size() != 2) {
@@ -679,7 +682,7 @@ Campaign::InitElectionResults(std::string_view file_name)
                 Err() << "Invalid senate seat: " << region_name;
                 return false;
             }
-            auto m = ParseMargins(margin_data, file_name);
+            auto m = ParseMargins(margin_data, file_name, true);
             if (!m)
                 return false;
             map[race->race_id()] = *m;

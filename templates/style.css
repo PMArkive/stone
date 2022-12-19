@@ -75,7 +75,7 @@ table, th, td, tr {
   clear: both;
 }
 #data {
-  width: 1300px;
+  width: 1350px;
 }
 #data::after {
   content: "";

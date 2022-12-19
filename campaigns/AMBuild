@@ -14,7 +14,7 @@ kCampaigns = {
   '2018': [ 'senate', 'governors', 'house', 'results' ],
   '2020': [ 'senate', 'governors', 'house', 'results', 'saved-house-ratings.proto.text' ],
   '2021': [ 'senate', 'results' ],
-  '2022': [ 'senate', 'governors', 'house', 'saved-house-ratings.proto.text' ],
+  '2022': [ 'senate', 'governors', 'house', 'results', 'saved-house-ratings.proto.text' ],
 }
 
 dist_out = builder.AddFolder('dist/data')
