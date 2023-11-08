@@ -321,7 +321,7 @@ Renderer::GenerateGraphs()
     while (!tasks.empty()) {
         auto argv = ke::PopBack(&tasks);
         auto task =[&ok, argv{std::move(argv)}](ThreadPool*) -> void {
-            ok.store(ok.load() & Run(argv));
+            ok.store(ok.load() && Run(argv));
         };
         cx_->workers().Do(std::move(task));
     }

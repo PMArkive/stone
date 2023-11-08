@@ -20,6 +20,7 @@
 #include <proto/state.pb.h>
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <unordered_map>
