@@ -5,14 +5,14 @@ def add_py_binary(name):
   inputs = [
       os.path.join(builder.sourcePath, 'tools', name),
   ]
-  inputs.extend(Global.protos['.py'])
+  inputs.extend(Global.protos['python']['sources'])
 
   argv = [
       'pyinstaller',
       inputs[0],
       '-F',
+      '-p', builder.buildPath,
       '-p', os.path.join(builder.buildPath, 'proto'),
-      '-p', os.path.join(builder.buildPath, 'proto', 'proto'),
   ]
 
   outputs = [
@@ -31,12 +31,12 @@ add_py_binary('generate-graph.py')
 def add_tool(name, sources):
   tool = builder.cxx.Program(name)
   tool.compiler.cxxincludes += [
-    os.path.join(builder.buildPath, 'proto'),
+    builder.buildPath,
     os.path.join(builder.sourcePath, 'third_party/amtl'),
     os.path.join(builder.sourcePath, 'third_party/date/include'),
   ]
   tool.compiler.pkg_config('protobuf')
-  tool.compiler.sourcedeps += [src_entry for src_entry in Global.protos['.h']]
+  tool.compiler.sourcedeps += Global.protos['cpp']['headers']
   tool.compiler.linkflags += [
     Global.libprotos.binary,
     Global.libamtl.binary,

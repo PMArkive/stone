@@ -1,7 +1,7 @@
 # vim: ft=python sts=2 ts=2 sw=0 tw=99 et
 import os
 
-proto_path = os.path.join(builder.buildPath, 'proto')
+proto_path = builder.buildPath
 
 driver = builder.cxx.Program('driver')
 driver.compiler.cxxflags += []
@@ -30,7 +30,7 @@ driver.compiler.pkg_config('libcurl')
 driver.compiler.pkg_config('ncurses')
 driver.compiler.pkg_config('openssl')
 driver.compiler.pkg_config('protobuf')
-driver.compiler.sourcedeps += [src_entry for src_entry in Global.protos['.h']]
+driver.compiler.sourcedeps += Global.protos['cpp']['headers']
 driver.sources += [
   'analysis.cpp',
   'campaign.cpp',

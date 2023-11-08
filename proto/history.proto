@@ -2,9 +2,9 @@ syntax = "proto3";
 
 package stone;
 
-import "proto/model.proto";
-import "proto/state.proto";
-import "proto/poll.proto";
+import "model.proto";
+import "state.proto";
+import "poll.proto";
 
 message ImportantDate {
   Date date = 1;

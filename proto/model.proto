@@ -2,8 +2,8 @@ syntax = "proto3";
 
 package stone;
 
-import "proto/poll.proto";
-import "proto/state.proto";
+import "poll.proto";
+import "state.proto";
 
 message RaceModel {
   // The race id index is based on the race type.
