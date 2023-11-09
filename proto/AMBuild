@@ -2,7 +2,6 @@
 import os
 
 protoc = builder.DetectProtoc()
-protoc.includes += ['.']
 
 proto_files = [
   'history.proto',
@@ -12,15 +11,14 @@ proto_files = [
   'cache.proto',
 ]
 
-proto_gen = protoc.Generate(builder, proto_files, ['cpp', 'python'])
+proto_gen = protoc.Generate(builder, proto_files, ['python'])
 
-protos = builder.cxx.StaticLibrary('protos')
-protos.compiler.sourcedeps += proto_gen['cpp']['sources']
-protos.compiler.sourcedeps += proto_gen['cpp']['headers']
-for src_entry in proto_gen['cpp']['sources']:
-  src_path = os.path.join(builder.buildPath, src_entry.path)
-  protos.sources.append(src_path)
+proto_cpp = protoc.StaticLibrary('protos',
+                                 builder = builder,
+                                 cxx = builder.cxx,
+                                 sources = proto_files)
+proto_gen['cpp'] = { 'headers': proto_cpp.headers }
 
-Global.libprotos = builder.Add(protos)
+Global.libprotos = proto_cpp.lib
 
 rvalue = proto_gen
